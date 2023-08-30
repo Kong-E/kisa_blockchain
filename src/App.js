@@ -11,8 +11,8 @@ function App() {
   const [block, setBlock] = useState(null);
   const [transaction, setTransaction] = useState(null);
 
-  const [receiver, setReceiver] = useState(null);
-  const [amount, setAmount] = useState(null);
+  const [receiver, setReceiver] = useState("");
+  const [amount, setAmount] = useState("");
 
   const loadTransaction = async () => {
     const transaction = await web3.eth.getTransaction(
@@ -38,20 +38,39 @@ function App() {
 
     // console.log("accountFromInfura : ", accountFromInfura);
     // console.log("accountFromMetaMask : ", accountFromMetaMask);
-    setAddress(accountFromMetaMask[0]);
+    setAddress(accountFromInfura.address);
 
-    const balance = await web3.eth.getBalance(accountFromMetaMask[0]);
+    const balance = await web3.eth.getBalance(accountFromInfura.address);
     const ether = web3.utils.fromWei(balance, "ether");
     setBalance(ether);
   };
 
-  const onClickSend = async () => {
+  const sendMetamask = async () => {
     await web3.eth.sendTransaction({
       from: address,
       to: receiver,
       value: web3.utils.toWei(amount, "ether"),
     });
     alert(receiver + "로 " + amount + "를 보냈습니다.");
+  };
+
+  const sendInfura = async () => {
+    const nonce = await web3.eth.getTransactionCount(address);
+
+    const txData = {
+      nonce: nonce,
+      gasLimit: 21000,
+      gasPrice: web3.utils.toWei("10", "gwei"),
+      to: receiver,
+      from: address,
+      value: web3.utils.toWei(amount, "ether"),
+    };
+
+    const account = await web3.eth.accounts.privateKeyToAccount(
+      process.env.REACT_APP_PRIVATE_KEY
+    );
+    const signedTx = await account.signTransaction(txData); // 서명
+    await web3.eth.sendSignedTransaction(signedTx.rawTransaction); // 전송
   };
 
   const printObject = (data) => {
@@ -68,9 +87,9 @@ function App() {
     const metaMaskProvider = window.ethereum;
     window.ethereum.enable();
 
-    const web3Instance = new Web3(metaMaskProvider || infuraProvider);
+    const web3Instance = new Web3(infuraProvider);
     setWeb3(web3Instance);
-  }, [web3]);
+  }, []);
 
   useEffect(() => {
     if (web3) {
@@ -99,7 +118,7 @@ function App() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
-        <button onClick={onClickSend}>전송하기</button>
+        <button onClick={sendInfura}>전송하기</button>
       </div>
     </>
   );
