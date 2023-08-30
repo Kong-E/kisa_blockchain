@@ -3,6 +3,9 @@ import "./App.css";
 import Web3 from "web3";
 import { useEffect, useState } from "react";
 
+const contractAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";
+const eventTransferABI = require("./contract/eventTransfer.json");
+
 function App() {
   const [web3, setWeb3] = useState(null);
   const [address, setAddress] = useState(null);
