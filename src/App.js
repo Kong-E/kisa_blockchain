@@ -1,10 +1,9 @@
-import logo from "./logo.svg";
 import "./App.css";
 import Web3 from "web3";
 import { useEffect, useState } from "react";
 
-const contractAddress = "0xd9145CCE52D386f254917e481eB44e9943F39138";
-const eventTransferABI = require("./contract/eventTransfer.json");
+const contractAddress = "0x606B4ae060c7361063B420425ba3a446085F0e0d";
+const eventTransferABI = require("./eventTransfer.json");
 
 function App() {
   const [web3, setWeb3] = useState(null);
@@ -16,6 +15,83 @@ function App() {
 
   const [receiver, setReceiver] = useState("");
   const [amount, setAmount] = useState("");
+
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    const infuraProvider = new Web3.providers.HttpProvider(
+      process.env.REACT_APP_INFURA_ENDPOINT
+    );
+
+    const metaMaskProvider = window.ethereum;
+    metaMaskProvider.enable();
+
+    const web3Instance = new Web3(metaMaskProvider);
+    setWeb3(web3Instance);
+  }, []);
+
+  useEffect(() => {
+    if (web3) {
+      loadBalance();
+      loadBlock();
+      loadTransaction();
+      listenEvent();
+      loadEvent();
+    }
+  }, [web3]);
+
+  const loadEvent = async () => {
+    const number = await web3.eth.getBlockNumber();
+    const topic = web3.utils.keccak256("transfer(address,address,uint256)");
+
+    const eventObj = {
+      address: contractAddress,
+      topics: [topic],
+      fromBlock: number - 300n,
+      toBlock: "latest",
+    };
+
+    const logs = await web3.eth.getPastLogs(eventObj);
+    const array = logs.map((log) => {
+      const eventData = web3.eth.abi.decodeLog(
+        [
+          {
+            type: "address",
+            name: "from",
+            indexed: true,
+          },
+          {
+            type: "address",
+            name: "to",
+            indexed: true,
+          },
+          {
+            type: "uint256",
+            name: "value",
+          },
+        ],
+        log.data,
+        log.topics.slice(1)
+      );
+      return eventData;
+    });
+
+    console.log("완료된 전송 :", array);
+    setItems(array);
+  };
+
+  const listenEvent = () => {
+    const contract = new web3.eth.Contract(eventTransferABI, contractAddress);
+
+    const eventName = "transfer";
+
+    contract.events[eventName]({
+      fromBlock: "latest",
+    }).on("data", (event) => {
+      setItems((items) => [event.returnValues, ...items]);
+      alert("Completed transfer"); // Use console.log instead of alert
+    });
+  };
 
   const loadTransaction = async () => {
     const transaction = await web3.eth.getTransaction(
@@ -41,20 +117,24 @@ function App() {
 
     // console.log("accountFromInfura : ", accountFromInfura);
     // console.log("accountFromMetaMask : ", accountFromMetaMask);
-    setAddress(accountFromInfura.address);
+    // setAddress(accountFromInfura.address);
+    setAddress(accountFromMetaMask[0]);
 
-    const balance = await web3.eth.getBalance(accountFromInfura.address);
+    // const balance = await web3.eth.getBalance(accountFromInfura.address);
+    const balance = await web3.eth.getBalance(accountFromMetaMask[0]);
     const ether = web3.utils.fromWei(balance, "ether");
     setBalance(ether);
   };
 
   const sendMetamask = async () => {
+    const contract = new web3.eth.Contract(eventTransferABI, contractAddress);
+
     await web3.eth.sendTransaction({
       from: address,
-      to: receiver,
+      to: contractAddress,
       value: web3.utils.toWei(amount, "ether"),
+      data: contract.methods.sendEther(receiver).encodeABI(),
     });
-    alert(receiver + "로 " + amount + "를 보냈습니다.");
   };
 
   const sendInfura = async () => {
@@ -82,26 +162,6 @@ function App() {
     });
   };
 
-  useEffect(() => {
-    const infuraProvider = new Web3.providers.HttpProvider(
-      process.env.REACT_APP_INFURA_ENDPOINT
-    );
-
-    const metaMaskProvider = window.ethereum;
-    window.ethereum.enable();
-
-    const web3Instance = new Web3(infuraProvider);
-    setWeb3(web3Instance);
-  }, []);
-
-  useEffect(() => {
-    if (web3) {
-      loadBalance();
-      loadBlock();
-      loadTransaction();
-    }
-  }, [web3]);
-
   return (
     <>
       <div className="App">내 지갑주소는 {address}</div>
@@ -121,7 +181,18 @@ function App() {
           value={amount}
           onChange={(e) => setAmount(e.target.value)}
         />
-        <button onClick={sendInfura}>전송하기</button>
+        <button onClick={sendMetamask}>전송하기</button>
+      </div>
+
+      <div className="App">
+        {items.map((item, index) => {
+          return (
+            <div key={index}>
+              {item.from} =&gt; {item.to} :{" "}
+              {web3.utils.fromWei(item.value, "ether")}
+            </div>
+          );
+        })}
       </div>
     </>
   );
