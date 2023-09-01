@@ -4,7 +4,7 @@ import Web3 from "web3";
 const tokenAddress = "0xdD6B735216B6F4236cC0aDf016Af5F07C8F4C0Cd";
 const tokenABI = require("./token.json");
 
-const defiAddress = "0xF6b691567bc05b70Ff8D51A1C8b83Ff83D75eBFA";
+const defiAddress = "0x75aE351Db58F1705f89721E2714C71b2776caCcA";
 const defiABI = require("./defi.json");
 
 const Defi = () => {
@@ -70,8 +70,8 @@ const Defi = () => {
       from: address,
       to: tokenAddress,
       value: web3.utils.toWei(amount, "ether"),
-      gasLimit: 500000,
-      gasPrice: web3.utils.toWei("50", "gwei"),
+      gasLimit: 300000,
+      gasPrice: web3.utils.toWei("10", "gwei"),
       data: contract.methods
         .approve(defiAddress, web3.utils.toWei(amount, "ether"))
         .encodeABI(),
@@ -87,8 +87,8 @@ const Defi = () => {
       from: address,
       to: tokenAddress,
       value: web3.utils.toWei(amount, "ether"),
-      gasLimit: 500000,
-      gasPrice: web3.utils.toWei("50", "gwei"),
+      gasLimit: 300000,
+      gasPrice: web3.utils.toWei("10", "gwei"),
       data: contract.methods
         .depositTokens(web3.utils.toWei(amount, "ether"))
         .encodeABI(),
@@ -104,8 +104,8 @@ const Defi = () => {
       from: address,
       to: defiAddress,
       value: web3.utils.toWei(amount, "ether"),
-      gasLimit: 500000,
-      gasPrice: web3.utils.toWei("50", "gwei"),
+      gasLimit: 300000,
+      gasPrice: web3.utils.toWei("10", "gwei"),
       data: contract.methods.withdrawTokens().encodeABI(),
     });
   };

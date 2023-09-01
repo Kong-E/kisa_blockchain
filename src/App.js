@@ -132,7 +132,8 @@ function App() {
     await web3.eth.sendTransaction({
       from: address,
       to: contractAddress,
-      value: web3.utils.toWei(amount, "ether"),
+      gasLimit: 21000,
+      gasPrice: web3.utils.toWei("10", "gwei"),
       data: contract.methods.sendEther(receiver).encodeABI(),
     });
   };

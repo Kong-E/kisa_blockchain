@@ -1,0 +1,9 @@
+{
+  "name": "Kong E",
+  "description": "Kong E is a bot that is made for fun and moderation. It has a lot of commands and is still being worked on.",
+  "image": "https://9ebc-218-153-212-102.ngrok-free.app/images/kong.jpg",
+  "attributes": [
+    { "trait_type": "Color", "value": "Pink" },
+    { "trait_type": "Size", "value": "Medium" }
+  ]
+}
